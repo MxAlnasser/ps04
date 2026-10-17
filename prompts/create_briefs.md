@@ -1,0 +1,1 @@
+Create exactly three connected but distinct briefs. Piece 1 explains what changed, piece 2 tests claims and tensions, and piece 3 explains implications and what to watch next. Every claim needs an exact quote or timestamped segment. Distinguish facts, source claims, and inference, explain synthesis across sources, and state meaningful limitations.

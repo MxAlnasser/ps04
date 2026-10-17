@@ -1,0 +1,1 @@
+Convert the reviewed article into a 3-5 minute audience-facing narration for Google Vids. Keep factual claims and uncertainty consistent with the article. Add concise visual directions in brackets and source-reference language suitable for a video description. Return only the script.

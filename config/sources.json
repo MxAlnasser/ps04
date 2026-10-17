@@ -1,1 +1,9 @@
-[]
+[
+	{"source_id":"github-advisories","publisher_id":"github-security","kind":"feed","url":"https://github.com/security-advisories.atom"},
+	{"source_id":"krebs-security","publisher_id":"krebs","kind":"feed","url":"https://krebsonsecurity.com/feed/"},
+	{"source_id":"hacker-news","publisher_id":"hacker-news","kind":"feed","url":"https://feeds.feedburner.com/TheHackersNews"},
+	{"source_id":"google-security","publisher_id":"google-security","kind":"feed","url":"https://security.googleblog.com/feeds/posts/default"},
+	{"source_id":"fireship","publisher_id":"fireship","kind":"youtube","url":"https://www.youtube.com/@Fireship/videos"},
+	{"source_id":"standup-podcast","publisher_id":"standup-podcast","kind":"podcast","url":"https://thestanduppod.com/feed.xml"},
+	{"source_id":"darknet-diaries","publisher_id":"darknet-diaries","kind":"podcast","url":"https://feeds.megaphone.fm/darknetdiaries"}
+]

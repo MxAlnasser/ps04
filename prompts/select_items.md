@@ -1,0 +1,1 @@
+Apply the snapshotted editorial policy to each eligible item. Return one JSON decision per item with item_id, version_id, decision, reason, and piece_ids. Explain the evidence for relevance and credibility, disclose uncertainty and incentives, and use defer when the material might matter but cannot yet support a defensible claim.

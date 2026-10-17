@@ -1,6 +1,6 @@
 {
-  "publication_name": "",
-  "topic": "",
-  "audience": "",
-  "central_question": ""
+  "publication_name": "Signal to Ship",
+  "topic": "Recent software and cybersecurity developments",
+  "audience": "Engineering leads and technically literate product managers at small software teams",
+  "central_question": "Which recent security signals deserve engineering attention, and what should teams do next?"
 }

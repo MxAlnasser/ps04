@@ -1,0 +1,1 @@
+Write a 600-900 word article for the configured audience from the reviewed brief. Preserve claim IDs and evidence references, use the run as-of date, distinguish facts from interpretation, include a counterargument or limitation, and avoid claims not supported by the brief.

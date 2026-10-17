@@ -1,0 +1,32 @@
+# Generated pipeline runs and human-facing output
+/runs/
+/output/
+/latest-run.txt
+
+# Evidence database and retained downloads/transcripts
+/data/evidence/
+/data/media/
+/data/assets/
+
+# Disposable local checks
+/tmp/
+
+# Local model and media artifacts accidentally created at repository root
+*.sqlite
+*.db
+/*.webm
+/*.mp3
+/*.vtt
+/*.srt
+/*.tsv
+/*.txt
+/*.json
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
