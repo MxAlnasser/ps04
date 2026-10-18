@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import hashlib, json, re, shutil, sys
+import hashlib, json, os, re, shutil, sys
 from pathlib import Path
 from pipeline import ROOT, load_json, dump, lines, write_lines, now, article, script
 
@@ -36,9 +36,11 @@ def handoff(run):
         for child in out.iterdir():
             shutil.rmtree(child) if child.is_dir() else child.unlink()
     (out/'articles').mkdir(parents=True); (out/'google-vids').mkdir(); (out/'sources').mkdir(); (out/'media').mkdir()
+    mode=os.environ.get('OUTPUT_MODE','full')
     for p in ('01','02','03'):
         shutil.copyfile(run/'articles'/(p+'.md'), out/'articles'/(f'article-{p}.md'))
-        shutil.copyfile(run/'video_scripts'/(p+'.md'), out/'google-vids'/(f'video-prompt-{p}.md'))
+        if mode in ('full','prompts','voiceovers'):
+            shutil.copyfile(run/'video_scripts'/(p+'.md'), out/'google-vids'/(f'video-prompt-{p}.md'))
     for label, filename in [('rss','feeds.jsonl'),('youtube','youtube.jsonl'),('podcasts','podcasts.jsonl')]:
         records=lines(run/'candidates'/filename); (out/'sources'/(label+'.md')).write_text('\n'.join([f'# {label.title()} sources', '']+[f'- {x.get("title", "Untitled")}\n  {x.get("url", "no URL")}' for x in records])+'\n')
     item_titles={x['item_id']:x for x in lines(run/'items.jsonl')}
@@ -57,9 +59,15 @@ def handoff(run):
     lines_out=[f'# Signal to Ship: Run {run.name}', '', f"Status: **{s['status']}**", '', '## Open these files', '', 'These are the only files you need for the normal review.', '', '### Articles', '']
     for p in ('01','02','03'):
         lines_out.append(f'- `output/articles/article-{p}.md`')
-    lines_out += ['', '### Google Vids prompts', '', 'Copy each matching prompt into Google Vids or HeyGen.', '']
-    for p in ('01','02','03'):
-        lines_out.append(f'- `output/google-vids/video-prompt-{p}.md`')
+    if mode in ('full','prompts','voiceovers'):
+        lines_out += ['', '### Google Vids prompts', '', 'Copy each matching prompt into Google Vids or HeyGen.', '']
+        for p in ('01','02','03'):
+            lines_out.append(f'- `output/google-vids/video-prompt-{p}.md`')
+    if mode in ('full','voiceovers'):
+        lines_out += ['', '### Short voiceover text', '', 'These one-paragraph files are the text sent to your voice model.', '']
+        for p in ('01','02','03'):
+            lines_out.append(f'- `output/google-vids/voiceover-text-{p}.txt`')
+        lines_out += ['', '### Generated voice audio', '', '- Open `output/voiceovers/` for the WAV narration files.']
     lines_out += ['', '### Source lists', '', '- `output/sources/rss.md`', '- `output/sources/youtube.md`', '- `output/sources/podcasts.md`', '', '### Downloaded media', '', '- Open `output/media/` for downloaded podcast and video audio.', '', '## Quick Run Summary', '']
     lines_out += [f"- Discovered: {c['discovered']}", f"- Fresh and eligible: {c['eligible']}", f"- Accepted for the series: {c['accepted']}", f"- Excluded by date or validity checks: {c['excluded']}", f"- Articles: {c['articles']}", f"- Video prompts: {c['video_scripts']}", '', '## What To Do Next', '', '1. Read and fact-check the three article files.', '2. Paste each matching video prompt into Google Vids or HeyGen.', '3. Add the article and source links to each video description.', '4. Publish the articles on Substack and the videos on YouTube.']
     report=out/'README.md'; report.write_text('\n'.join(lines_out)+'\n'); (ROOT/'latest-run.txt').write_text(str(run.relative_to(ROOT))+'\n'); return report

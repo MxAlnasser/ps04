@@ -21,6 +21,9 @@
 /*.tsv
 /*.txt
 /*.json
+/*.wav
+/assets/*.wav
+!/assets/voice.wav
 
 # Python caches
 __pycache__/

@@ -1,228 +1,339 @@
-# Problem Set 4 Intelligence and Influence
+# Signal to Ship Pipeline
 
-**MIT 1.125**  
-**Format:** Individual assignment  
-**Duration:** One week
+A repeatable intelligence pipeline for turning recent cybersecurity and software news into articles, Google Vids scripts, and narrated voiceovers.
 
-Read the [architecture specification](ARCHITECTURE.md) for required commands, interfaces, and data formats. Complete [SUBMISSION.md](SUBMISSION.md) with your project details, evidence, and publication links.
+This project is configured for engineering leads and technically literate product managers who need to understand which security developments deserve attention and what to do next.
 
-## Objective
+## What It Does
 
-Build a repeatable pipeline that collects recent information, directs AI to make editorial decisions, and produces a publication for a specific audience. Use it to publish a connected series of three Substack articles, each accompanied by a YouTube video.
+The pipeline can:
 
-Use AI for editorial selection, synthesis, and generation of article drafts and video scripts. Your responsibility is to design the process, direct its judgment, and verify its results.
+- Collect recent written sources from RSS feeds.
+- Collect recent YouTube videos with `yt-dlp`.
+- Collect recent podcast episodes and audio locations.
+- Retrieve written source content.
+- Download media when needed.
+- Use automatic captions when available.
+- Optionally use local Whisper transcription when captions are unavailable.
+- Preserve timestamped transcript segments for video and audio evidence.
+- Apply the required 30-day publication window.
+- Record exclusions such as stale, future, undated, or invalid material.
+- Detect new, changed, unchanged, and duplicate evidence.
+- Keep evidence versions in a SQLite-backed store.
+- Apply the editorial policy to source selection.
+- Record accepted, rejected, and deferred items.
+- Create three distinct editorial briefs.
+- Generate three connected article drafts.
+- Generate three matching Google Vids or HeyGen scripts.
+- Summarize scripts into short one-paragraph narration text.
+- Generate voiceovers using the provided `voice.wav` reference.
+- Produce readable source lists for RSS, YouTube, and podcasts.
+- Preserve machine-readable artifacts for inspection and replay.
+- Create a publication handoff package after human approval.
 
-Choose a field in which you would like to develop a credible voice. Your contribution should help an audience understand developments, assess competing claims, and form better questions. Your system must produce original synthesis grounded in traceable evidence.
+## Requirements
 
-The central engineering task is to make this process repeatable. You must understand the architecture, explain the AI's editorial choices, and demonstrate how the system responds to new information.
+The project uses the tools already installed in this workspace:
 
-## Topic and Audience
+- Bash
+- Python 3
+- `jq`
+- `yt-dlp`
+- `ffmpeg`
+- Whisper
+- Codex
+- `gum`
+- Chatterbox TTS dependencies used by `lib/tts.py`
 
-Choose **one topic and one audience** for the entire series. Define a question your audience would benefit from revisiting regularly.
+No additional Python package is required beyond the installed TTS environment.
 
-For example, you might investigate AI documentation tools for physicians running small practices, construction robotics for project managers, or AI music tools for independent musicians. Narrow the topic enough to support specific conclusions within one week.
+The voice workflow also requires:
 
-Write a brief stating:
+- `lib/tts.py`
+- `assets/voice.wav`
 
-- Who the audience is and what they already understand.
-- What question, decision, or professional interest the publication serves.
-- What the publication includes and excludes.
-- Why a reader would return for the next edition.
+`assets/voice.wav` is the reference voice used by Chatterbox.
 
-Give the publication a name and a consistent editorial voice.
+## Basic Use
 
-## Source Collection and Freshness
+Run the pipeline from the repository root:
 
-Your pipeline must collect and process all three input types:
-
-| Input | Required capability |
-| --- | --- |
-| RSS feeds | Discover entries, retrieve substantive source content, and identify previously processed items. |
-| YouTube video | Retrieve video or audio content, obtain or generate a transcript, and preserve timestamps linking evidence to the video. |
-| Podcast audio | Retrieve podcast audio, obtain or generate a transcript, and preserve timestamps linking evidence to the episode. |
-
-Audio and video must contribute distinct original material. A podcast episode and its YouTube upload count as one item. An RSS entry that points to that episode is a discovery route, not an additional item.
-
-Collect at least **12 distinct substantive items from six independent sources**, including at least two items of each input type. For RSS, the two items must lead to substantive written material. A source may be a publisher, organization, channel, or podcast. Reposts and syndicated copies do not establish independence. These are minimum coverage requirements; collecting more material alone does not improve your grade.
-
-Include different perspectives, such as research, commercial announcements, and practitioner experience. Explain whose perspectives are missing. Web scraping, computer use, comments, and tools such as the last30days skill may supplement the required inputs.
-
-**All substantive source material must have been published within the preceding 30 days.** Each publication must state an as-of date equal to the actual execution date of the pipeline run that supplied its evidence. Apply the 30-day window relative to that date. Complete the submitted runs during the assignment week.
-
-Record publication dates separately from collection dates. Exclude undated material from the evidence supporting your publications. An old recording uploaded again or an unchanged article with a refreshed date does not become a new development. Identify when a recent source discusses an older event, and explain what is newly reported or learned.
-
-## Editorial Judgment and Original Synthesis
-
-Create an explicit editorial policy that the pipeline supplies to the AI during selection and synthesis. The policy must address audience relevance, freshness, source credibility, novelty, and diversity of perspectives. Explain how the system handles uncertainty, conflicting evidence, commercial incentives, and unsupported claims.
-
-Credibility assessments must consider the evidence for a particular claim. Institutional reputation, popularity, and model confidence are insufficient by themselves. Several sources repeating the same announcement count as one underlying claim, not independent corroboration.
-
-Save the actual prompts or instructions used, along with structured editorial decisions. For each candidate item, record whether the system accepted, rejected, or deferred it and why. Record which article uses each selected item.
-
-Develop three connected pieces with distinct editorial purposes:
-
-| Piece | Editorial question |
-| --- | --- |
-| 1 | What changed, and which developments matter most to this audience? |
-| 2 | Which claims withstand scrutiny, and where are the evidence or interpretations in tension? |
-| 3 | What do these developments imply for the audience, and what should they watch next? |
-
-Each piece must:
-
-- Advance a distinct central argument supported by at least three independent sources.
-- Develop at least one insight by connecting evidence from multiple sources. Explain the reasoning and what your analysis adds beyond the individual sources.
-- Distinguish reported facts, source claims, your interpretation, and remaining uncertainty.
-- Address a meaningful limitation or counterargument. Do not manufacture disagreement when the evidence does not support it.
-- Link substantive claims to evidence, including timestamps for audio or video passages.
-
-All three required input types must contribute evidence to the series. You may reuse evidence across pieces when it serves a different argument. Each piece must make an additional intellectual contribution.
-
-An original contribution might reveal a mismatch between a product announcement and practitioner experience, explain why two apparently conflicting results differ, or identify a shared constraint across several developments. A list of summaries, a compilation of quotations, or three rewrites of the same argument does not satisfy this requirement.
-
-Review a sample of at least **three accepted and three rejected or deferred items**. Compare the AI's reasons with your own judgment. Revise the editorial policy at least once, rerun the affected stage, and document how the choices or synthesis changed. Preserve any human corrections to factual claims and explain why they were necessary.
-
-## System Architecture
-
-Use the supplied **intelligence-pipeline-starter** repository structure. It contains **16 empty Bash files** for you to implement. The [architecture specification](ARCHITECTURE.md) defines the required commands, data formats, artifacts, and failure behavior. These contracts are part of the assignment.
-
-```text
-intelligence-pipeline-starter/
-├── README.md
-├── ARCHITECTURE.md
-├── SUBMISSION.md
-├── run.sh
-├── workflows/
-│   ├── collect_sources.sh
-│   └── create_series.sh
-├── collectors/
-│   ├── fetch_feeds.sh
-│   ├── fetch_youtube.sh
-│   └── fetch_podcasts.sh
-├── processing/
-│   ├── extract_content.sh
-│   └── filter_items.sh
-├── data/
-│   └── store.sh
-├── editorial/
-│   ├── select_items.sh
-│   └── create_briefs.sh
-├── content/
-│   ├── write_articles.sh
-│   └── write_video_scripts.sh
-├── review/
-│   └── check_content.sh
-├── publishing/
-│   └── prepare_package.sh
-├── reporting/
-│   └── summarize_run.sh
-├── config/
-│   ├── project.json
-│   ├── sources.json
-│   └── editorial_policy.md
-├── prompts/
-│   ├── select_items.md
-│   ├── create_briefs.md
-│   ├── write_articles.md
-│   └── write_video_scripts.md
-└── examples/
+```bash
+./run.sh
 ```
 
-Each Bash file has one required responsibility:
+The command opens an interactive menu:
 
-| File | Responsibility |
-| --- | --- |
-| `run.sh` | Establish the run, call the workflows, and report its outcome. |
-| `workflows/collect_sources.sh` | Coordinate collection, extraction, storage, and freshness filtering. |
-| `workflows/create_series.sh` | Coordinate editorial decisions, briefs, article and video-script generation, and content checks. |
-| `collectors/fetch_feeds.sh` | Discover written items from configured RSS feeds and emit source metadata. |
-| `collectors/fetch_youtube.sh` | Discover configured YouTube material and emit source metadata. |
-| `collectors/fetch_podcasts.sh` | Discover podcast episodes and their audio locations. |
-| `processing/extract_content.sh` | Retrieve substantive text or media, prepare timestamped transcripts, and produce normalized evidence records. |
-| `processing/filter_items.sh` | Apply the 30-day window and record eligible items and exclusion reasons. |
-| `data/store.sh` | Own persistent evidence storage, stable identities, version history, and duplicate handling. |
-| `editorial/select_items.sh` | Apply the editorial policy through AI and record selections, rejections, and deferrals. |
-| `editorial/create_briefs.sh` | Develop three distinct arguments with explicit claims and supporting evidence. |
-| `content/write_articles.sh` | Generate three article drafts from the briefs. |
-| `content/write_video_scripts.sh` | Generate three audience-facing scripts from the same briefs. |
-| `review/check_content.sh` | Check drafts, references, freshness, and consistency; report issues for human review. |
-| `publishing/prepare_package.sh` | Assemble reviewed articles, video scripts, and references for production and publication. |
-| `reporting/summarize_run.sh` | Report source coverage, changes, stage outcomes, costs, and remaining manual work. |
+1. **Full package**: articles, Google Vids prompts, and voiceovers.
+2. **Articles + Google Vids prompts**: skips voice generation.
+3. **Articles only**: creates the written series without video deliverables.
 
-**Keep every required filename and responsibility.** You may add focused helper files, providers, and collectors. Scripts may call Python, JavaScript, model APIs, command-line agents, and existing packages. Preserve the component boundaries: a shared implementation that performs the whole pipeline behind superficial wrappers does not satisfy the architecture requirement.
+The terminal prints progress as each stage runs. Every run has built-in timeouts so a blocked feed, media download, transcription, or model call cannot wait forever.
 
-Keep `run.sh` and the two workflows focused on coordination. Each substantive component must be independently runnable using the documented interface. Use JSON Lines for records passed between components, with the required fields and meanings in `ARCHITECTURE.md`. Save intermediate artifacts so graders can inspect or replay a stage.
+## Command Options
 
-**Only `data/store.sh` may directly read or write the persistent evidence index or database.** Other components use its commands. You may choose SQLite or a documented file format behind this interface. Retained source files, transcripts, run artifacts, and configuration are separate from this index and may be accessed by their responsible components.
+```bash
+./run.sh --help
+```
 
-Keep topic settings, source lists, editorial policy, and model prompts in their prescribed files. Record the models and tools used, execution time, and approximate cost of each run. Reuse unchanged stored material where possible.
+Shows the available commands.
 
-The automated pipeline must reach article drafts, video scripts, evidence references, and content checks. Google Vids or HeyGen production and platform publishing may involve manual steps. `prepare_package.sh` provides that handoff after human editorial review; it is not required to publish through platform APIs. Document the remaining manual actions accurately.
+```bash
+./run.sh --full
+```
 
-## Published Series
+Enables Whisper when a video or podcast has no usable automatic captions. This can take substantially longer than the normal run.
 
-Publish **three Substack articles and three accompanying YouTube videos** for your chosen audience.
+```bash
+./run.sh --offline
+```
 
-- Each article should be approximately **600–900 words**, excluding references.
-- Each accompanying video should be approximately **3–5 minutes**, presenting the article's central argument in a form suited to viewing and listening.
-- Use **Google Vids or HeyGen** to produce each audience-facing video. An avatar, including a custom avatar, is optional.
-- Generate the article and its video script from the same reviewed evidence and editorial brief. Keep their factual claims consistent.
-- Link each article to its video. Include the article and source references in the video's description, and make evidence references understandable to viewers.
+Runs without Codex. This is useful for a fast local test or when the model service is unavailable.
 
-Publish the Substack articles with shareable access and without a paid subscription requirement. YouTube videos may be public or unlisted. Verify that course staff can open every submitted link.
+```bash
+./run.sh --voiceovers
+```
 
-You are responsible for reviewing the material before publication. Attribute source material and identify AI-generated presentation where used. Assessing credibility also requires recognizing where the available evidence does not justify a confident conclusion.
+Uses the existing Google Vids prompts in `output/google-vids/`, asks Codex to create one concise paragraph per prompt, and sends those short paragraphs to the voice model.
 
-## Repeatability Demonstration
+```bash
+./run.sh --package runs/RUN_ID
+```
 
-Complete at least **two pipeline runs on different days**. Preserve their inputs, outputs, and logs so the differences are inspectable.
+Creates a publication package from a run that has passed review and has a matching human approval record. Packaging does not recollect sources or regenerate approved drafts.
 
-Demonstrate that the system:
+## Interactive Output Choices
 
-- Identifies newly discovered or changed material and explains any resulting editorial changes.
-- Avoids duplicate records and unnecessary processing when the same inputs are replayed.
-- Applies the 30-day window and records why material is excluded.
-- Reports a failed collection attempt and continues with an explicit account of incomplete coverage, or resumes successfully after the failure is resolved.
+### Full Package
 
-If no meaningful new material appears between runs, report that result. Demonstrate the update behavior using a clearly labeled replay that introduces a previously withheld, eligible item. Label deliberately simulated failures as well.
+Creates:
 
-Submit three article/video pairs in total. Later runs may revise existing drafts or supply later pieces in the series; they do not require another complete published series.
+- Three article files.
+- Three full Google Vids prompts.
+- Three short one-paragraph voiceover text files.
+- Three WAV voiceovers using `voice.wav`.
+- RSS, YouTube, and podcast source lists.
+- Downloaded media associated with the current run.
 
-## Technical Demonstration Video
+### Articles and Prompts
 
-Record a separate **4–6 minute narrated demonstration** of the system you built. This video is for evaluating the system's capabilities and your architectural understanding.
+Creates the three articles and the full Google Vids prompts, but skips voice synthesis.
 
-Show the architecture and entry point, trace one source through an editorial decision into a published claim, and demonstrate the second run. Include evidence of duplicate handling or failure recovery. Explain one human correction or policy revision and one significant architectural tradeoff.
+### Articles Only
 
-Make the relevant files, records, and outputs readable. The technical demonstration is separate from the three audience-facing videos.
+Creates only the article deliverables and source lists. This is useful when the written analysis needs review before creating videos.
 
-## Submission
+## Human-Facing Output
 
-Submit a GitHub repository based on the supplied starter, with all 16 required scripts implemented. Include the saved editorial policy and prompts, dependency and setup instructions, and enough sample evidence and intermediate artifacts from both runs to inspect the complete workflow. The starter's fictional examples demonstrate formats and do not count as collected evidence. Keep credentials out of the repository. Document how to retrieve any media that you retain locally but cannot include.
+All files intended for normal review are placed in one folder:
 
-Complete the repository's [SUBMISSION.md](SUBMISSION.md) as the entry point for your work. Preserve the course instructions in `README.md` and `ARCHITECTURE.md`. Include:
+```text
+output/
+├── README.md
+├── articles/
+│   ├── article-01.md
+│   ├── article-02.md
+│   └── article-03.md
+├── google-vids/
+│   ├── video-prompt-01.md
+│   ├── video-prompt-02.md
+│   ├── video-prompt-03.md
+│   ├── voiceover-text-01.txt
+│   ├── voiceover-text-02.txt
+│   └── voiceover-text-03.txt
+├── voiceovers/
+│   ├── video-prompt-01.wav
+│   ├── video-prompt-02.wav
+│   └── video-prompt-03.wav
+├── sources/
+│   ├── rss.md
+│   ├── youtube.md
+│   └── podcasts.md
+└── media/
+```
 
-1. Your topic, audience, publication purpose, and links to all three Substack articles and YouTube videos.
-2. A link to the separate technical demonstration video.
-3. An architecture diagram and the command needed to run the pipeline.
-4. Setup requirements, configuration instructions, and a description of manual handoffs.
-5. Locations of the evidence store, editorial decisions, review sample, policy revision, and records from both runs.
-6. A short reflection on one insight the system produced, one editorial failure or limitation, and the next improvement you would make.
+The generated `output/README.md` is a run-specific checklist. Start there when reviewing the latest output.
 
-Be prepared to explain any component and trace a published claim back to its original evidence.
+### Articles
 
-## Evaluation
+Read the files in `output/articles/`. The three pieces have different editorial purposes:
 
-| Criterion | Weight | Evidence of strong work |
-| --- | --- | --- |
-| Architecture and repeatability | 40% | All required components implement their assigned responsibilities and interfaces; intermediate artifacts, persistent state, updates, and failure behavior are demonstrated. |
-| Evidence quality and freshness | 25% | Meaningful use of all required inputs, independent sources, verified dates, traceable claims, and careful treatment of credibility and uncertainty. |
-| Editorial judgment and original synthesis | 25% | A working editorial policy, defensible selections and rejections, an examined policy revision, and three distinct arguments that connect evidence. |
-| Communication and publication | 10% | A coherent, accessible series for the chosen audience, usable links, and a clear technical demonstration. |
+1. **Signal**: what changed and why it matters.
+2. **Scrutiny**: which claims are supported and where evidence is uncertain.
+3. **Action**: what software teams should do and watch next.
 
-Production polish contributes within the communication criterion. Audience size, likes, and follower counts are not grading criteria.
+### Google Vids Prompts
 
-## Suggested Schedule
+Copy the matching `video-prompt-01.md`, `video-prompt-02.md`, or `video-prompt-03.md` file into Google Vids or HeyGen. These are the fuller scripts with visual directions and production guidance.
 
-Use the first two days to establish the topic, audience, source collection, and evidence store. Complete an initial end-to-end run by day three. Use days four and five to examine editorial decisions, revise the policy, and develop the series. Complete the second run and publication by day six. Reserve the final day for verification, documentation, and the technical demonstration.
+### Voiceover Text
 
-Choose a subject you would want to keep following after the assignment. The result should be a system you can run again and a publication whose reasoning readers can inspect.
+The `voiceover-text-*.txt` files are shorter than the full Google Vids prompts. Codex removes headings, visual directions, citations, and production notes, leaving one natural spoken paragraph for TTS.
+
+### Voiceovers
+
+The `output/voiceovers/` directory contains WAV files generated with the provided voice reference. These can be used as narration assets in the video-production workflow.
+
+### Source Lists
+
+The files in `output/sources/` list the titles and URLs collected in the latest run, separated by source type.
+
+### Downloaded Media
+
+The files in `output/media/` are named from their source titles where possible. Internal evidence IDs are not exposed in the human-facing folder.
+
+## Internal Artifacts
+
+The human-facing output is intentionally separate from the machine-readable pipeline data.
+
+```text
+runs/RUN_ID/
+├── run.json
+├── config/
+├── prompts/
+├── logs/
+├── candidates/
+├── candidates.jsonl
+├── items.jsonl
+├── changes.jsonl
+├── corpus.jsonl
+├── eligible.jsonl
+├── exclusions.jsonl
+├── decisions.jsonl
+├── briefs.jsonl
+├── articles.jsonl
+├── articles/
+├── video_scripts.jsonl
+├── video_scripts/
+├── review.json
+├── approval.json
+├── summary.json
+└── package/
+```
+
+These files support grading, replay, debugging, source traceability, duplicate handling, and the required repeatability demonstration. They are not intended to be the normal review interface.
+
+The `data/` directory contains retained evidence, downloaded source media, transcripts, and the persistent evidence index.
+
+## Editorial Pipeline
+
+The stages are intentionally separated:
+
+1. `collectors/` discover RSS, YouTube, and podcast material.
+2. `processing/` extracts content and applies freshness filtering.
+3. `data/store.sh` owns persistent evidence and version history.
+4. `editorial/` selects items and develops three briefs.
+5. `content/` writes articles and video scripts.
+6. `review/` checks references, files, coverage, and consistency.
+7. `publishing/` prepares the human publication handoff.
+8. `reporting/` summarizes counts, failures, tools, and remaining manual work.
+
+The required Bash entry points remain independently runnable and preserve the architecture specified by the assignment.
+
+## TTS Workflow
+
+The reusable `lib/tts.py` module supports both direct use and pipeline use.
+
+Direct use:
+
+```bash
+python3 lib/tts.py --text some-text.txt --voice assets/voice.wav --output some-output.wav
+```
+
+Pipeline use:
+
+```bash
+./run.sh --voiceovers
+```
+
+The pipeline loads the TTS model once, summarizes each full Google Vids prompt first, and then generates one WAV per short narration. Voice generation is time-bounded because local model inference can be slow.
+
+## Timeouts and Progress
+
+Progress messages appear in the terminal, for example:
+
+```text
+[collect] fetching RSS feeds
+[extract] podcast: episode title
+[series] writing article drafts
+[voice] output/google-vids/voiceover-text-01.txt -> output/voiceovers/video-prompt-01.wav
+```
+
+The pipeline uses bounded operations for:
+
+- RSS requests.
+- YouTube collection.
+- Podcast collection.
+- Content extraction.
+- The collection workflow.
+- The editorial workflow.
+- Voiceover generation.
+- Manual test commands.
+
+A failed source does not silently become successful empty coverage. Partial results are retained and reported.
+
+## Configuration
+
+Edit these files to change the publication:
+
+- `config/project.json`: publication name, topic, audience, and central question.
+- `config/sources.json`: RSS, YouTube, and podcast sources.
+- `config/editorial_policy.md`: selection and credibility rules.
+- `prompts/select_items.md`: selection instructions.
+- `prompts/create_briefs.md`: brief-generation instructions.
+- `prompts/write_articles.md`: article-generation instructions.
+- `prompts/write_video_scripts.md`: video-script instructions.
+
+The exact configuration and prompts used for every run are copied into that run's internal directory.
+
+## Publication Workflow
+
+After reviewing the output:
+
+1. Fact-check `output/articles/`.
+2. Paste each `output/google-vids/video-prompt-*.md` file into Google Vids or HeyGen.
+3. Use the matching WAV from `output/voiceovers/` when appropriate.
+4. Publish each article on Substack.
+5. Publish each video on YouTube.
+6. Add the article and source links to each video description.
+7. Record the final links in `SUBMISSION.md`.
+8. Record human approval in the appropriate run's `approval.json`.
+9. Package the approved run with `./run.sh --package runs/RUN_ID`.
+
+## Git Hygiene
+
+Generated artifacts are excluded by `.gitignore`, including:
+
+- `runs/`
+- `output/`
+- `data/evidence/`
+- `data/media/`
+- `data/assets/`
+- `tmp/`
+- Python caches.
+- Generated root-level media files.
+- Local environment files.
+
+The source code, configuration, prompts, assignment documents, TTS implementation, and voice reference remain separate from generated run output.
+
+## Troubleshooting
+
+### The run appears stuck
+
+Watch the stage messages. A stage is bounded by timeouts and will eventually report an error or continue with partial coverage. Use `./run.sh --offline` to check the local pipeline without Codex.
+
+### Voice generation is too slow
+
+Use `./run.sh` and choose the articles-plus-prompts option, then run `./run.sh --voiceovers` only when ready. The voice stage loads a local model and may take several minutes.
+
+### A source is inaccessible
+
+The run records the failure and continues with usable sources. Check `output/sources/` and the internal run receipts for incomplete coverage.
+
+### Google Vids prompts are too long for TTS
+
+Use the short `voiceover-text-*.txt` files or run `./run.sh --voiceovers`. The full prompts are intended for Google Vids; the short files are intended for narration.
+
+### I need to inspect the complete pipeline
+
+Open the latest run directory under `runs/`. The human-facing files are in `output/`, while the run directory contains the complete machine-readable evidence trail.
